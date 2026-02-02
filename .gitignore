@@ -1,0 +1,27 @@
+# 測試檔案
+*.pdf
+test/
+
+# 編輯器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# 暫存檔
+*.tmp
+*.bak
+*.log
+
+# Node.js (如果未來需要)
+node_modules/
+package-lock.json
+yarn.lock
