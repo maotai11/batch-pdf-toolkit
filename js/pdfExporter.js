@@ -13,11 +13,15 @@ class PDFExporter {
    * 匯出為 PDF
    * @param {Array} pages - 頁面陣列 [{canvas, fileName, pageNum}]
    * @param {Object} options - 匯出選項
+   *   - quality: JPEG 品質 (0-1)
+   *   - namingRule: 命名規則
+   *   - useHtml2Canvas: 是否使用 HTML2Canvas（中文亂碼時啟用）
    * @returns {Promise<Blob>}
    */
   async exportToPDF(pages, options = {}) {
     const quality = options.quality || this.defaultQuality;
     const namingRule = options.namingRule || '{原始檔名}-{頁碼}';
+    const useHtml2Canvas = options.useHtml2Canvas || false;
     
     if (pages.length === 0) {
       throw new Error('沒有頁面可匯出');
@@ -30,8 +34,8 @@ class PDFExporter {
     for (let i = 0; i < pages.length; i++) {
       const pageData = pages[i];
       
-      // 將 Canvas 轉為圖片
-      const imageData = await this.canvasToImage(pageData.canvas, quality);
+      // 將 Canvas 轉為圖片（可選用 HTML2Canvas）
+      const imageData = await this.canvasToImage(pageData.canvas, quality, useHtml2Canvas);
       
       // 嵌入圖片到 PDF
       const image = await pdfDoc.embedJpg(imageData);
@@ -54,9 +58,10 @@ class PDFExporter {
    * 將 Canvas 轉為圖片資料
    * @param {HTMLCanvasElement|Object} canvas - Canvas 元素或 CanvasManager
    * @param {number} quality - JPEG 品質 (0-1)
+   * @param {boolean} useHtml2Canvas - 是否使用 HTML2Canvas（中文亂碼備用方案）
    * @returns {Promise<ArrayBuffer>}
    */
-  async canvasToImage(canvas, quality = 0.85) {
+  async canvasToImage(canvas, quality = 0.85, useHtml2Canvas = false) {
     let canvasElement;
     
     // 如果是 CanvasManager 物件
@@ -64,6 +69,22 @@ class PDFExporter {
       canvasElement = canvas.fabricCanvas.getElement();
     } else {
       canvasElement = canvas;
+    }
+    
+    // 備用方案：使用 HTML2Canvas（處理中文亂碼）
+    if (useHtml2Canvas && window.html2canvas) {
+      try {
+        const screenshot = await html2canvas(canvasElement, {
+          scale: 2, // 提高解析度
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        canvasElement = screenshot;
+      } catch (error) {
+        console.warn('HTML2Canvas 失敗，使用原生方法:', error);
+      }
     }
     
     // 轉為 Blob
@@ -81,10 +102,14 @@ class PDFExporter {
    * 匯出單一頁面
    * @param {Object} pageData - 頁面資料
    * @param {Object} options - 選項
+   *   - quality: JPEG 品質 (0-1)
+   *   - namingRule: 命名規則
+   *   - useHtml2Canvas: 是否使用 HTML2Canvas（中文亂碼時啟用）
    * @returns {Promise<Blob>}
    */
   async exportSinglePage(pageData, options = {}) {
     const quality = options.quality || this.defaultQuality;
+    const useHtml2Canvas = options.useHtml2Canvas || false;
     const fileName = this.parseNamingRule(options.namingRule || '{原始檔名}-{頁碼}', {
       originalName: pageData.fileName,
       pageNum: pageData.pageNum,
@@ -95,7 +120,7 @@ class PDFExporter {
     const { PDFDocument } = this.PDFLib;
     const pdfDoc = await PDFDocument.create();
     
-    const imageData = await this.canvasToImage(pageData.canvas, quality);
+    const imageData = await this.canvasToImage(pageData.canvas, quality, useHtml2Canvas);
     const image = await pdfDoc.embedJpg(imageData);
     const page = pdfDoc.addPage([image.width, image.height]);
     
