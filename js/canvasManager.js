@@ -173,13 +173,16 @@ class CanvasManager {
   /**
    * 添加文字註解
    * @param {string} text - 文字內容
+   * @param {string} textColor - 文字顏色
+   * @param {string} backgroundColor - 背景顏色
    */
-  addText(text = '輸入文字') {
+  addText(text = '輸入文字', textColor = '#333', backgroundColor = null) {
     const textObj = new fabric.IText(text, {
       left: 100,
       top: 100,
       fontSize: 20,
-      fill: '#333',
+      fill: textColor,
+      backgroundColor: backgroundColor,
       fontFamily: 'Arial',
       isAnnotation: true
     });
