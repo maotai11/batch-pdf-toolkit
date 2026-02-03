@@ -62,7 +62,13 @@ class App {
     this.uiController.on('rotate-left', () => this.handleRotate(-90));
     this.uiController.on('rotate-right', () => this.handleRotate(90));
     this.uiController.on('crop', () => this.handleCrop());
-    this.uiController.on('add-text', () => this.canvasManager.addText());
+    this.uiController.on('add-text', () => {
+      const textColor = document.getElementById('text-color')?.value || '#333';
+      const bgColor = document.getElementById('text-bg-color')?.value;
+      // 如果背景色是白色，視為透明
+      const backgroundColor = (bgColor && bgColor !== '#ffffff') ? bgColor : null;
+      this.canvasManager.addText('輸入文字', textColor, backgroundColor);
+    });
     this.uiController.on('add-rect', () => this.canvasManager.addRectangle());
     this.uiController.on('add-circle', () => this.canvasManager.addCircle());
     this.uiController.on('delete-selected', () => this.canvasManager.deleteSelected());
